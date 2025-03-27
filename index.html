@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro QR</title>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #reader { width: 300px; margin-bottom: 20px; }
+    select, table, button { margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+<h2>Escáner QR</h2>
+<div id="reader"></div>
+
+<select id="personList" onchange="filterTable()">
+  <option value="">Selecciona una persona</option>
+</select>
+
+<table border="1" id="logTable">
+  <thead>
+    <tr><th>Nombre</th><th>Fecha</th><th>Hora</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<button onclick="exportToExcel()">Exportar a Excel</button>
+
+<script>
+// Estructura de almacenamiento
+let registros = [];
+
+function startScanner() {
+  const qrScanner = new Html5Qrcode("reader");
+  qrScanner.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    qrCodeMessage => {
+      qrScanner.stop();
+      handleQR(qrCodeMessage);
+      setTimeout(() => startScanner(), 2000); // reiniciar escáner
+    },
+    errorMessage => {}
+  );
+}
+
+function handleQR(text) {
+  const match = text.match(/^(.*?)\s+C\.C\s+([\d\.]+)$/i);
+  if (!match) return alert("Formato inválido");
+
+  const nombre = match[1].trim();
+  const now = new Date();
+  const fecha = now.toLocaleDateString();
+  const hora = now.toLocaleTimeString();
+
+  registros.push({ nombre, fecha, hora });
+  updateTable();
+  updateListbox();
+}
+
+function updateTable() {
+  const tbody = document.querySelector("#logTable tbody");
+  tbody.innerHTML = "";
+  const selected = document.getElementById("personList").value;
+
+  registros
+    .filter(r => !selected || r.nombre === selected)
+    .forEach(reg => {
+      const row = `<tr><td>${reg.nombre}</td><td>${reg.fecha}</td><td>${reg.hora}</td></tr>`;
+      tbody.innerHTML += row;
+    });
+}
+
+function updateListbox() {
+  const select = document.getElementById("personList");
+  const nombresUnicos = [...new Set(registros.map(r => r.nombre))];
+  select.innerHTML = '<option value="">Selecciona una persona</option>';
+  nombresUnicos.forEach(nombre => {
+    const option = document.createElement("option");
+    option.value = nombre;
+    option.textContent = nombre;
+    select.appendChild(option);
+  });
+}
+
+function filterTable() {
+  updateTable();
+}
+
+function exportToExcel() {
+  const wb = XLSX.utils.book_new();
+  const personas = [...new Set(registros.map(r => r.nombre))];
+
+  personas.forEach(nombre => {
+    const datos = registros.filter(r => r.nombre === nombre);
+    const wsData = [["Fecha", "Hora"]];
+    datos.forEach(r => wsData.push([r.fecha, r.hora]));
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, nombre.substring(0, 31)); // max 31 chars
+  });
+
+  XLSX.writeFile(wb, "registro_qr.xlsx");
+}
+
+startScanner();
+</script>
+
+</body>
+</html>
