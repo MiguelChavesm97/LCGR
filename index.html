@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro QR 3- Liceo Cristiano Golden Rule</title>
+    <title>Registro QR - Liceo Cristiano Golden Rule</title>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
@@ -265,7 +265,6 @@
 
             filterTable();
         }
-
         function filterTable() {
             const selected = document.getElementById("personList").value;
             const selectedDate = document.getElementById("dateFilter").value;
@@ -273,10 +272,13 @@
             const tbody = document.querySelector("#logTable tbody");
             tbody.innerHTML = "";
 
-            const filteredRegistros = registros.filter(r => 
-                (!selected || r.nombre === selected) && 
-                (!selectedDate || r.fecha === formatearFecha(selectedDate))
-            );
+            const filteredRegistros = registros.filter(r => {
+                const matchPerson = !selected || r.nombre === selected;
+                const matchDate = !selectedDate || 
+                    convertirFechaParaComparacion(r.fecha) === selectedDate;
+                
+                return matchPerson && matchDate;
+            });
 
             filteredRegistros.forEach(reg => {
                 const row = `
@@ -289,7 +291,6 @@
                 tbody.innerHTML += row;
             });
         }
-
         function exportToExcel() {
             const wb = XLSX.utils.book_new();
             const personas = [...new Set(registros.map(r => r.nombre))];
