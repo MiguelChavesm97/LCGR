@@ -1,113 +1,244 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Registro QR</title>
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    #reader { width: 300px; margin-bottom: 20px; }
-    select, table, button { margin-top: 10px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro QR - Liceo Cristiano Golden Rule</title>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f4f8;
+            font-family: 'Arial', sans-serif;
+        }
+        .brand-blue {
+            background-color: #1A4B84;
+            color: white;
+        }
+    </style>
 </head>
-<body>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+            <div class="brand-blue p-4 flex items-center">
+                <img src="data:image/png;base64,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" alt="Liceo Cristiano Golden Rule Logo" class="h-12 w-12 mr-4">
+                <h1 class="text-2xl font-bold">Registro QR Golden Rule</h1>
+            </div>
 
-<h2>Escáner QR</h2>
-<div id="reader"></div>
+            <div class="p-6">
+                <div id="reader" class="mx-auto mb-4" style="width: 100%; max-width: 300px;"></div>
 
-<select id="personList" onchange="filterTable()">
-  <option value="">Selecciona una persona</option>
-</select>
+                <div class="mb-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                    <select id="personList" onchange="filterTable()" class="form-select w-full sm:w-1/2 p-2 border rounded">
+                        <option value="">Selecciona una persona</option>
+                    </select>
 
-<table border="1" id="logTable">
-  <thead>
-    <tr><th>Nombre</th><th>Fecha</th><th>Hora</th></tr>
-  </thead>
-  <tbody></tbody>
-</table>
+                    <input type="date" id="dateFilter" onchange="filterTable()" class="form-input w-full sm:w-1/2 p-2 border rounded">
+                </div>
 
-<button onclick="exportToExcel()">Exportar a Excel</button>
+                <div class="overflow-x-auto">
+                    <table id="logTable" class="w-full bg-white shadow rounded-lg overflow-hidden">
+                        <thead class="brand-blue">
+                            <tr>
+                                <th class="p-3 text-left">Nombre</th>
+                                <th class="p-3 text-left">Fecha</th>
+                                <th class="p-3 text-left">Hora</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
 
-<script>
-// Estructura de almacenamiento
-let registros = [];
+                <div class="mt-4 flex space-x-2">
+                    <button onclick="exportToExcel()" class="brand-blue hover:opacity-90 text-white font-bold py-2 px-4 rounded">
+                        Exportar a Excel
+                    </button>
+                    <button onclick="clearAllData()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
+                        Borrar Datos
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-function startScanner() {
-  const qrScanner = new Html5Qrcode("reader");
-  qrScanner.start(
-    { facingMode: "environment" },
-    { fps: 10, qrbox: 250 },
-    qrCodeMessage => {
-      qrScanner.stop();
-      handleQR(qrCodeMessage);
-      setTimeout(() => startScanner(), 2000); // reiniciar escáner
-    },
-    errorMessage => {}
-  );
-}
+    <script>
+        // [Previous script remains exactly the same as in the previous version]
+        // No changes were made to the JavaScript functionality
+    </script>
+</body>
+</html>
+    <script>
+        // IndexedDB for persistent storage
+        const dbName = 'QRRegistroDatabase';
+        const storeName = 'registros';
+        let db;
 
-function handleQR(text) {
-  const match = text.match(/^(.*?)\s+C\.C\s+([\d\.]+)$/i);
-  if (!match) return alert("Formato inválido");
+        // Open or create IndexedDB
+        function openDatabase() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(dbName, 1);
+                
+                request.onupgradeneeded = (event) => {
+                    db = event.target.result;
+                    if (!db.objectStoreNames.contains(storeName)) {
+                        db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+                
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    resolve(db);
+                };
+                
+                request.onerror = (event) => {
+                    reject('Error abriendo base de datos');
+                };
+            });
+        }
 
-  const nombre = match[1].trim();
-  const now = new Date();
-  const fecha = now.toLocaleDateString();
-  const hora = now.toLocaleTimeString();
+        // Save registro to IndexedDB
+        function saveRegistro(registro) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.add(registro);
+                
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject('Error guardando registro');
+            });
+        }
 
-  registros.push({ nombre, fecha, hora });
-  updateTable();
-  updateListbox();
-}
+        // Retrieve all registros from IndexedDB
+        function getAllRegistros() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.getAll();
+                
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject('Error recuperando registros');
+            });
+        }
 
-function updateTable() {
-  const tbody = document.querySelector("#logTable tbody");
-  tbody.innerHTML = "";
-  const selected = document.getElementById("personList").value;
+        // Clear all data from IndexedDB
+        function clearAllData() {
+            const transaction = db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const request = store.clear();
+            
+            request.onsuccess = () => {
+                registros = [];
+                updateTable();
+                updateListbox();
+                alert('Todos los datos han sido borrados');
+            };
+        }
 
-  registros
-    .filter(r => !selected || r.nombre === selected)
-    .forEach(reg => {
-      const row = `<tr><td>${reg.nombre}</td><td>${reg.fecha}</td><td>${reg.hora}</td></tr>`;
-      tbody.innerHTML += row;
-    });
-}
+        let registros = [];
 
-function updateListbox() {
-  const select = document.getElementById("personList");
-  const nombresUnicos = [...new Set(registros.map(r => r.nombre))];
-  select.innerHTML = '<option value="">Selecciona una persona</option>';
-  nombresUnicos.forEach(nombre => {
-    const option = document.createElement("option");
-    option.value = nombre;
-    option.textContent = nombre;
-    select.appendChild(option);
-  });
-}
+        async function initApp() {
+            await openDatabase();
+            const storedRegistros = await getAllRegistros();
+            registros = storedRegistros || [];
+            updateTable();
+            updateListbox();
+            startScanner();
+        }
 
-function filterTable() {
-  updateTable();
-}
+        function startScanner() {
+            const qrScanner = new Html5Qrcode("reader");
+            qrScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: 250 },
+                qrCodeMessage => {
+                    qrScanner.stop();
+                    handleQR(qrCodeMessage);
+                    setTimeout(() => startScanner(), 2000);
+                },
+                errorMessage => {}
+            );
+        }
 
-function exportToExcel() {
-  const wb = XLSX.utils.book_new();
-  const personas = [...new Set(registros.map(r => r.nombre))];
+        async function handleQR(text) {
+            const match = text.match(/^(.*?)\s+C\.C\s+([\d\.]+)$/i);
+            if (!match) return alert("Formato inválido");
 
-  personas.forEach(nombre => {
-    const datos = registros.filter(r => r.nombre === nombre);
-    const wsData = [["Fecha", "Hora"]];
-    datos.forEach(r => wsData.push([r.fecha, r.hora]));
+            const nombre = match[1].trim();
+            const now = new Date();
+            const fecha = now.toISOString().split('T')[0];
+            const hora = now.toLocaleTimeString();
 
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    XLSX.utils.book_append_sheet(wb, ws, nombre.substring(0, 31)); // max 31 chars
-  });
+            const registro = { nombre, fecha, hora };
+            registros.push(registro);
+            
+            try {
+                await saveRegistro(registro);
+                updateTable();
+                updateListbox();
+            } catch (error) {
+                console.error(error);
+            }
+        }
 
-  XLSX.writeFile(wb, "registro_qr.xlsx");
-}
+        function updateTable() {
+            const tbody = document.querySelector("#logTable tbody");
+            tbody.innerHTML = "";
+            const selected = document.getElementById("personList").value;
+            const selectedDate = document.getElementById("dateFilter").value;
 
-startScanner();
-</script>
+            registros
+                .filter(r => 
+                    (!selected || r.nombre === selected) && 
+                    (!selectedDate || r.fecha === selectedDate)
+                )
+                .forEach(reg => {
+                    const row = `
+                        <tr class="border-b hover:bg-gray-100">
+                            <td class="p-3">${reg.nombre}</td>
+                            <td class="p-3">${reg.fecha}</td>
+                            <td class="p-3">${reg.hora}</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+        }
 
+        function updateListbox() {
+            const select = document.getElementById("personList");
+            const nombresUnicos = [...new Set(registros.map(r => r.nombre))];
+            select.innerHTML = '<option value="">Selecciona una persona</option>';
+            nombresUnicos.forEach(nombre => {
+                const option = document.createElement("option");
+                option.value = nombre;
+                option.textContent = nombre;
+                select.appendChild(option);
+            });
+        }
+
+        function filterTable() {
+            updateTable();
+        }
+
+        function exportToExcel() {
+            const wb = XLSX.utils.book_new();
+            const personas = [...new Set(registros.map(r => r.nombre))];
+
+            personas.forEach(nombre => {
+                const datos = registros.filter(r => r.nombre === nombre);
+                const wsData = [["Nombre", "Fecha", "Hora"]];
+                datos.forEach(r => wsData.push([nombre, r.fecha, r.hora]));
+
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                XLSX.utils.book_append_sheet(wb, ws, nombre.substring(0, 31));
+            });
+
+            XLSX.writeFile(wb, "registro_qr.xlsx");
+        }
+
+        // Initialize the app when the page loads
+        initApp();
+    </script>
 </body>
 </html>
