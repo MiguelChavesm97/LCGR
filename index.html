@@ -82,6 +82,22 @@
         const storeName = 'registros';
         let db;
 
+        // Función para convertir fecha de yyyy-mm-dd a dd/mm/yyyy
+        function formatearFecha(fechaISO) {
+            const fecha = new Date(fechaISO);
+            const dia = fecha.getDate().toString().padStart(2, '0');
+            const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+            const año = fecha.getFullYear();
+            return `${dia}/${mes}/${año}`;
+        }
+
+        // Función para convertir fecha de dd/mm/yyyy a yyyy-mm-dd
+        function convertirFechaParaComparacion(fechaFormateada) {
+            if (!fechaFormateada) return null;
+            const [dia, mes, año] = fechaFormateada.split('/');
+            return `${año}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+        }
+
         // Open or create IndexedDB
         function openDatabase() {
             return new Promise((resolve, reject) => {
@@ -124,7 +140,14 @@
                 const store = transaction.objectStore(storeName);
                 const request = store.getAll();
                 
-                request.onsuccess = () => resolve(request.result);
+                request.onsuccess = () => {
+                    // Convertir fechas de yyyy-mm-dd a dd/mm/yyyy
+                    const registrosFormateados = request.result.map(registro => ({
+                        ...registro,
+                        fecha: formatearFecha(registro.fecha)
+                    }));
+                    resolve(registrosFormateados);
+                };
                 request.onerror = () => reject('Error recuperando registros');
             });
         }
@@ -180,14 +203,18 @@
 
             const nombre = match[1].trim();
             const now = new Date();
-            const fecha = now.toISOString().split('T')[0];
+            const fecha = formatearFecha(now.toISOString().split('T')[0]);
             const hora = now.toLocaleTimeString();
 
-            const registro = { nombre, fecha, hora };
+            const registro = { nombre, fecha, hora, fechaOriginal: now.toISOString().split('T')[0] };
             registros.push(registro);
             
             try {
-                await saveRegistro(registro);
+                await saveRegistro({
+                    nombre, 
+                    fecha: now.toISOString().split('T')[0], 
+                    hora
+                });
                 updateTable();
                 updateListbox();
             } catch (error) {
@@ -204,7 +231,7 @@
             registros
                 .filter(r => 
                     (!selected || r.nombre === selected) && 
-                    (!selectedDate || r.fecha === selectedDate)
+                    (!selectedDate || r.fecha === formatearFecha(selectedDate))
                 )
                 .forEach(reg => {
                     const row = `
@@ -248,7 +275,7 @@
 
             const filteredRegistros = registros.filter(r => 
                 (!selected || r.nombre === selected) && 
-                (!selectedDate || r.fecha === selectedDate)
+                (!selectedDate || r.fecha === formatearFecha(selectedDate))
             );
 
             filteredRegistros.forEach(reg => {
