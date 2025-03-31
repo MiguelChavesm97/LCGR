@@ -42,6 +42,10 @@
         <div class="p-6">
             <div id="reader" class="mx-auto mb-4" style="width: 100%; max-width: 300px;"></div>
 
+            <button id="activarQR" onclick="startScanner()" class="mb-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded hidden">
+                Leer QR
+            </button>
+
             <div class="mb-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                 <select id="personList" onchange="filterTable()" class="form-select w-full sm:w-1/2 p-2 border rounded">
                     <option value="">Selecciona una persona</option>
@@ -69,11 +73,6 @@
                 <button onclick="clearAllData()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
                     Borrar Datos
                 </button>
-                <label class="block font-semibold">Importar desde JSON:</label>
-                <input type="file" accept=".json" onchange="importarDesdeJSON(this)" class="p-2 border rounded">
-                <button onclick="guardarEnJSON()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                    Guardar Registros
-                </button>
             </div>
         </div>
     </div>
@@ -81,6 +80,7 @@
 
 <script>
     let registros = [];
+    let qrScanner;
 
     function guardarEnLocalStorage() {
         localStorage.setItem('registros_qr', JSON.stringify(registros));
@@ -106,7 +106,11 @@
     }
 
     function startScanner() {
-        const qrScanner = new Html5Qrcode("reader");
+        const readerDiv = document.getElementById("reader");
+        const boton = document.getElementById("activarQR");
+        boton.classList.add("hidden");
+
+        qrScanner = new Html5Qrcode("reader");
         qrScanner.start(
             { facingMode: "environment" },
             { fps: 10, qrbox: 250 },
@@ -115,8 +119,13 @@
                 handleQR(qrCodeMessage);
                 setTimeout(() => startScanner(), 2000);
             },
-            errorMessage => {}
-        );
+            errorMessage => {
+                console.warn("Error de cámara:", errorMessage);
+            }
+        ).catch(err => {
+            console.error("No se pudo iniciar la cámara:", err);
+            boton.classList.remove("hidden");
+        });
     }
 
     function handleQR(text) {
@@ -219,44 +228,6 @@
         });
 
         XLSX.writeFile(wb, "registro_qr.xlsx");
-    }
-
-    function guardarEnJSON() {
-        const dataStr = JSON.stringify(registros, null, 2);
-        const blob = new Blob([dataStr], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "registros_qr.json";
-        a.click();
-
-        URL.revokeObjectURL(url);
-    }
-
-    function importarDesdeJSON(input) {
-        const file = input.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            try {
-                const data = JSON.parse(e.target.result);
-                if (Array.isArray(data)) {
-                    registros = data;
-                    guardarEnLocalStorage();
-                    updateTable();
-                    updateListbox();
-                    alert("Registros importados con éxito.");
-                } else {
-                    alert("El archivo no contiene un formato válido.");
-                }
-            } catch (err) {
-                alert("Error al leer el archivo JSON.");
-                console.error(err);
-            }
-        };
-        reader.readAsText(file);
     }
 
     function clearAllData() {
