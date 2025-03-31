@@ -183,27 +183,28 @@ function updateListbox() {
 
 async function clearAllData() {
   const password = prompt("Por favor, ingrese la contraseña para borrar todos los datos:");
-  
-  if (password !== "LCGR") {
+  if (password !== "LCRG") {
     if (password !== null) alert("Contraseña incorrecta. No se borrarán los datos.");
     return startScanner();
   }
 
   try {
-    await fetch(`${API_BASE}/registros`, { method: 'DELETE' });
+    const res = await fetch(`${API_BASE}/registros`, { method: 'DELETE' });
+    if (!res.ok) throw new Error("No se pudo borrar los registros");
+
     registros = [];
     updateTable();
     updateListbox();
 
-    // Esperar 100ms para evitar colisión con alert()
+    // Usamos setTimeout para evitar interferencia con alert()
     setTimeout(() => {
       alert("Todos los datos han sido borrados.");
       cargarRegistros().then(() => startScanner());
     }, 100);
 
   } catch (err) {
-    console.error("Error al borrar datos:", err);
-    alert("Ocurrió un error al intentar borrar los datos.");
+    console.error("Error al borrar:", err);
+    alert("Ocurrió un error real al intentar borrar los datos.");
     startScanner();
   }
 }
