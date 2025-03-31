@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import sqlite3
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -42,6 +43,15 @@ def borrar_registros():
     with sqlite3.connect(DB_NAME) as conn:
         conn.execute('DELETE FROM registros')
     return jsonify({"mensaje": "Todos los registros han sido borrados"}), 200
+
+@app.route('/api/almacenamiento', methods=['GET'])
+def uso_almacenamiento():
+    size_bytes = os.path.getsize(DB_NAME)
+    size_mb = size_bytes / (1024 * 1024)
+    return jsonify({
+        "archivo": DB_NAME,
+        "tamano_mb": round(size_mb, 2)
+    })
 
 if __name__ == '__main__':
     init_db()
