@@ -234,6 +234,10 @@ async function verificarEspacio() {
   }
 }
 
+function filterTable() {
+  updateTable();
+}
+
 window.onload = async () => {
   await cargarRegistros();
   await verificarEspacio();
