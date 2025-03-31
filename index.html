@@ -85,9 +85,9 @@ async function startScanner() {
     { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
     msg => {
-      qrScanner.stop();
-      handleQR(msg);
-      setTimeout(() => startScanner(), 2000);
+      qrScanner.stop().then(() => {
+        handleQR(msg);
+      });
     },
     err => {}
   ).catch(() => {
@@ -113,6 +113,7 @@ async function handleQR(text) {
       body: JSON.stringify(registro)
     });
     await cargarRegistros();
+    startScanner();
   } catch (err) {
     alert("Error al guardar el registro.");
     console.error(err);
@@ -170,12 +171,13 @@ function updateListbox() {
 
 async function clearAllData() {
   const password = prompt("Por favor, ingrese la contraseña para borrar todos los datos:");
-  if (password === "LCGR") {
+  if (password === "LCRG") {
     await fetch(`${API_BASE}/registros`, { method: 'DELETE' });
     registros = [];
     updateTable();
     updateListbox();
     alert("Todos los datos han sido borrados.");
+    await cargarRegistros();
     startScanner();
   } else if (password !== null) {
     alert("Contraseña incorrecta. No se borrarán los datos.");
@@ -196,8 +198,21 @@ function exportToExcel() {
   startScanner();
 }
 
+async function verificarEspacio() {
+  try {
+    const res = await fetch(`${API_BASE}/almacenamiento`);
+    const data = await res.json();
+    if (data.tamano_mb > 50) {
+      alert("⚠️ ¡La base de datos está ocupando más de 50MB! Considera limpiar registros.");
+    }
+  } catch (err) {
+    console.warn("No se pudo verificar el tamaño de almacenamiento.");
+  }
+}
+
 window.onload = async () => {
   await cargarRegistros();
+  await verificarEspacio();
   startScanner();
 };
 </script>
