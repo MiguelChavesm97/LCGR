@@ -68,9 +68,18 @@ function convertirFechaParaComparacion(fechaFormateada) {
   return `${y}-${m}-${d}`;
 }
 
-function startScanner() {
+async function startScanner() {
   const boton = document.getElementById("activarQR");
   boton.classList.add("hidden");
+
+  if (qrScanner) {
+    try {
+      await qrScanner.stop();
+    } catch (e) {
+      console.warn("No se pudo detener el escáner anterior:", e);
+    }
+  }
+
   qrScanner = new Html5Qrcode("reader");
   qrScanner.start(
     { facingMode: "environment" },
@@ -161,7 +170,7 @@ function updateListbox() {
 
 async function clearAllData() {
   const password = prompt("Por favor, ingrese la contraseña para borrar todos los datos:");
-  if (password === "LCRG") {
+  if (password === "LCGR") {
     await fetch(`${API_BASE}/registros`, { method: 'DELETE' });
     registros = [];
     updateTable();
