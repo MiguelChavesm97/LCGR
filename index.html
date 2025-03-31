@@ -1,255 +1,196 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro QR - Liceo Cristiano Golden Rule</title>
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f0f4f8;
-            font-family: 'Arial', sans-serif;
-        }
-        .brand-blue {
-            background-color: #1A4B84;
-            color: white;
-        }
-        .logo-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            max-height: 50px;
-            max-width: 50px;
-        }
-        .logo-container img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro QR - Liceo Cristiano Golden Rule</title>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100">
 <div class="container mx-auto px-4 py-8">
-    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-        <div class="brand-blue p-4 flex items-center">
-            <div class="logo-container mr-4">
-                <img src="logo.png" alt="Liceo Cristiano Golden Rule Logo" class="h-12 w-12 mr-4">
-            </div>
-            <h1 class="text-2xl font-bold">Registro QR Golden Rule</h1>
-        </div>
-        <div class="p-6">
-            <div id="reader" class="mx-auto mb-4" style="width: 100%; max-width: 300px;"></div>
-
-            <button id="activarQR" onclick="startScanner()" class="mb-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded hidden">
-                Leer QR
-            </button>
-
-            <div class="mb-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                <select id="personList" onchange="filterTable()" class="form-select w-full sm:w-1/2 p-2 border rounded">
-                    <option value="">Selecciona una persona</option>
-                </select>
-                <input type="date" id="dateFilter" onchange="filterTable()" class="form-input w-full sm:w-1/2 p-2 border rounded">
-            </div>
-
-            <div class="overflow-x-auto">
-                <table id="logTable" class="w-full bg-white shadow rounded-lg overflow-hidden">
-                    <thead class="brand-blue">
-                        <tr>
-                            <th class="p-3 text-left">Nombre</th>
-                            <th class="p-3 text-left">Fecha</th>
-                            <th class="p-3 text-left">Hora</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-
-            <div class="mt-4 flex flex-wrap gap-2">
-                <button onclick="exportToExcel()" class="brand-blue hover:opacity-90 text-white font-bold py-2 px-4 rounded">
-                    Exportar a Excel
-                </button>
-                <button onclick="clearAllData()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
-                    Borrar Datos
-                </button>
-            </div>
-        </div>
+  <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+    <div class="bg-blue-900 text-white p-4 flex items-center">
+      <img src="logo.png" alt="Logo" class="h-12 w-12 mr-4">
+      <h1 class="text-2xl font-bold">Registro QR Golden Rule</h1>
     </div>
+    <div class="p-6">
+      <div id="reader" class="mx-auto mb-4" style="width: 100%; max-width: 300px;"></div>
+      <button id="activarQR" onclick="startScanner()" class="mb-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded hidden">
+        Leer QR
+      </button>
+
+      <div class="mb-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+        <select id="personList" onchange="filterTable()" class="form-select w-full sm:w-1/2 p-2 border rounded">
+          <option value="">Selecciona una persona</option>
+        </select>
+        <input type="date" id="dateFilter" onchange="filterTable()" class="form-input w-full sm:w-1/2 p-2 border rounded">
+      </div>
+
+      <div class="overflow-x-auto">
+        <table id="logTable" class="w-full bg-white shadow rounded-lg overflow-hidden">
+          <thead class="bg-blue-900 text-white">
+            <tr>
+              <th class="p-3 text-left">Nombre</th>
+              <th class="p-3 text-left">Fecha</th>
+              <th class="p-3 text-left">Hora</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button onclick="exportToExcel()" class="bg-blue-900 hover:opacity-90 text-white font-bold py-2 px-4 rounded">
+          Exportar a Excel
+        </button>
+        <button onclick="clearAllData()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
+          Borrar Datos
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-    let registros = [];
-    let qrScanner;
+const API_BASE = "https://lcgr.onrender.com/api";
+let registros = [];
+let qrScanner;
 
-    function guardarEnLocalStorage() {
-        localStorage.setItem('registros_qr', JSON.stringify(registros));
-    }
+function formatearFecha(fechaISO) {
+  const fecha = new Date(fechaISO);
+  return `${fecha.getDate().toString().padStart(2, '0')}/${(fecha.getMonth()+1).toString().padStart(2, '0')}/${fecha.getFullYear()}`;
+}
 
-    function cargarDesdeLocalStorage() {
-        const data = localStorage.getItem('registros_qr');
-        if (data) registros = JSON.parse(data);
-    }
+function convertirFechaParaComparacion(fechaFormateada) {
+  const [d, m, y] = fechaFormateada.split('/');
+  return `${y}-${m}-${d}`;
+}
 
-    function formatearFecha(fechaISO) {
-        const fecha = new Date(fechaISO);
-        const dia = fecha.getDate().toString().padStart(2, '0');
-        const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
-        const año = fecha.getFullYear();
-        return `${dia}/${mes}/${año}`;
-    }
+function startScanner() {
+  const boton = document.getElementById("activarQR");
+  boton.classList.add("hidden");
+  qrScanner = new Html5Qrcode("reader");
+  qrScanner.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    msg => {
+      qrScanner.stop();
+      handleQR(msg);
+      setTimeout(() => startScanner(), 2000);
+    },
+    err => {}
+  ).catch(() => {
+    boton.classList.remove("hidden");
+  });
+}
 
-    function convertirFechaParaComparacion(fechaFormateada) {
-        if (!fechaFormateada) return null;
-        const [dia, mes, año] = fechaFormateada.split('/');
-        return `${año}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-    }
+async function handleQR(text) {
+  const match = text.match(/^(.*?)\s+C\.C\s+([\d\.]+)$/i);
+  if (!match) return alert("Formato inválido");
 
-    function startScanner() {
-        const readerDiv = document.getElementById("reader");
-        const boton = document.getElementById("activarQR");
-        boton.classList.add("hidden");
+  const nombre = match[1].trim();
+  const now = new Date();
+  const fecha = now.toISOString().split('T')[0];
+  const hora = now.toLocaleTimeString();
 
-        qrScanner = new Html5Qrcode("reader");
-        qrScanner.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: 250 },
-            qrCodeMessage => {
-                qrScanner.stop();
-                handleQR(qrCodeMessage);
-                setTimeout(() => startScanner(), 2000);
-            },
-            errorMessage => {
-                console.warn("Error de cámara:", errorMessage);
-            }
-        ).catch(err => {
-            console.error("No se pudo iniciar la cámara:", err);
-            boton.classList.remove("hidden");
-        });
-    }
+  const registro = { nombre, fecha, hora };
 
-    function handleQR(text) {
-        const match = text.match(/^(.*?)\s+C\.C\s+([\d\.]+)$/i);
-        if (!match) return alert("Formato inválido");
+  try {
+    await fetch(`${API_BASE}/registro`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(registro)
+    });
+    await cargarRegistros();
+  } catch (err) {
+    alert("Error al guardar el registro.");
+    console.error(err);
+  }
+}
 
-        const nombre = match[1].trim();
-        const now = new Date();
-        const fecha = formatearFecha(now.toISOString().split('T')[0]);
-        const hora = now.toLocaleTimeString();
+async function cargarRegistros() {
+  try {
+    const res = await fetch(`${API_BASE}/registros`);
+    registros = await res.json();
+    registros.forEach(r => r.fecha = formatearFecha(r.fecha));
+    updateTable();
+    updateListbox();
+  } catch (err) {
+    console.error("Error al cargar registros:", err);
+  }
+}
 
-        const registro = { nombre, fecha, hora, fechaOriginal: now.toISOString().split('T')[0] };
-        registros.push(registro);
-        guardarEnLocalStorage();
-        updateTable();
-        updateListbox();
-    }
+function updateTable() {
+  const tbody = document.querySelector("#logTable tbody");
+  tbody.innerHTML = "";
+  const selected = document.getElementById("personList").value;
+  const selectedDate = document.getElementById("dateFilter").value;
 
-    function updateTable() {
-        const tbody = document.querySelector("#logTable tbody");
-        tbody.innerHTML = "";
-        const selected = document.getElementById("personList").value;
-        const selectedDate = document.getElementById("dateFilter").value;
+  registros.filter(r => {
+    const matchPerson = !selected || r.nombre === selected;
+    const matchDate = !selectedDate || convertirFechaParaComparacion(r.fecha) === selectedDate;
+    return matchPerson && matchDate;
+  }).forEach(reg => {
+    tbody.innerHTML += `
+      <tr class="border-b hover:bg-gray-100">
+        <td class="p-3">${reg.nombre}</td>
+        <td class="p-3">${reg.fecha}</td>
+        <td class="p-3">${reg.hora}</td>
+      </tr>`;
+  });
+}
 
-        registros
-            .filter(r =>
-                (!selected || r.nombre === selected) &&
-                (!selectedDate || r.fecha === formatearFecha(selectedDate))
-            )
-            .forEach(reg => {
-                const row = `
-                    <tr class="border-b hover:bg-gray-100">
-                        <td class="p-3">${reg.nombre}</td>
-                        <td class="p-3">${reg.fecha}</td>
-                        <td class="p-3">${reg.hora}</td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
-            });
-    }
+function updateListbox() {
+  const select = document.getElementById("personList");
+  const currentValue = select.value;
+  const nombresUnicos = [...new Set(registros.map(r => r.nombre))].sort();
+  select.innerHTML = '<option value="">Selecciona una persona</option>';
+  nombresUnicos.forEach(nombre => {
+    const option = document.createElement("option");
+    option.value = nombre;
+    option.textContent = nombre;
+    select.appendChild(option);
+  });
+  if (currentValue && nombresUnicos.includes(currentValue)) {
+    select.value = currentValue;
+  }
+  filterTable();
+}
 
-    function updateListbox() {
-        const select = document.getElementById("personList");
-        const currentValue = select.value;
-        const nombresUnicos = [...new Set(registros.map(r => r.nombre))].sort();
+async function clearAllData() {
+  const password = prompt("Por favor, ingrese la contraseña para borrar todos los datos:");
+  if (password === "LCRG") {
+    await fetch(`${API_BASE}/registros`, { method: 'DELETE' });
+    registros = [];
+    updateTable();
+    updateListbox();
+    alert("Todos los datos han sido borrados.");
+    startScanner();
+  } else if (password !== null) {
+    alert("Contraseña incorrecta. No se borrarán los datos.");
+  }
+}
 
-        select.innerHTML = '<option value="">Selecciona una persona</option>';
-        nombresUnicos.forEach(nombre => {
-            const option = document.createElement("option");
-            option.value = nombre;
-            option.textContent = nombre;
-            select.appendChild(option);
-        });
+function exportToExcel() {
+  const wb = XLSX.utils.book_new();
+  const personas = [...new Set(registros.map(r => r.nombre))];
+  personas.forEach(nombre => {
+    const datos = registros.filter(r => r.nombre === nombre);
+    const wsData = [["Nombre", "Fecha", "Hora"]];
+    datos.forEach(r => wsData.push([nombre, r.fecha, r.hora]));
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, nombre.substring(0, 31));
+  });
+  XLSX.writeFile(wb, "registro_qr.xlsx");
+  startScanner();
+}
 
-        if (currentValue && nombresUnicos.includes(currentValue)) {
-            select.value = currentValue;
-        }
-
-        filterTable();
-    }
-
-    function filterTable() {
-        const selected = document.getElementById("personList").value;
-        const selectedDate = document.getElementById("dateFilter").value;
-
-        const tbody = document.querySelector("#logTable tbody");
-        tbody.innerHTML = "";
-
-        const filteredRegistros = registros.filter(r => {
-            const matchPerson = !selected || r.nombre === selected;
-            const matchDate = !selectedDate ||
-                convertirFechaParaComparacion(r.fecha) === selectedDate;
-
-            return matchPerson && matchDate;
-        });
-
-        filteredRegistros.forEach(reg => {
-            const row = `
-                <tr class="border-b hover:bg-gray-100">
-                    <td class="p-3">${reg.nombre}</td>
-                    <td class="p-3">${reg.fecha}</td>
-                    <td class="p-3">${reg.hora}</td>
-                </tr>
-            `;
-            tbody.innerHTML += row;
-        });
-    }
-
-    function exportToExcel() {
-        const wb = XLSX.utils.book_new();
-        const personas = [...new Set(registros.map(r => r.nombre))];
-
-        personas.forEach(nombre => {
-            const datos = registros.filter(r => r.nombre === nombre);
-            const wsData = [["Nombre", "Fecha", "Hora"]];
-            datos.forEach(r => wsData.push([nombre, r.fecha, r.hora]));
-
-            const ws = XLSX.utils.aoa_to_sheet(wsData);
-            XLSX.utils.book_append_sheet(wb, ws, nombre.substring(0, 31));
-        });
-
-        XLSX.writeFile(wb, "registro_qr.xlsx");
-    }
-
-    function clearAllData() {
-        const password = prompt("Por favor, ingrese la contraseña para borrar todos los datos:");
-
-        if (password === "LCRG") {
-            registros = [];
-            localStorage.removeItem('registros_qr');
-            updateTable();
-            updateListbox();
-            alert('Todos los datos han sido borrados');
-        } else if (password !== null) {
-            alert("Contraseña incorrecta. No se borrarán los datos.");
-        }
-    }
-
-    window.onload = () => {
-        cargarDesdeLocalStorage();
-        updateTable();
-        updateListbox();
-        startScanner();
-    };
+window.onload = async () => {
+  await cargarRegistros();
+  startScanner();
+};
 </script>
 </body>
 </html>
