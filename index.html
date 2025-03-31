@@ -71,6 +71,9 @@
                 </button>
                 <label class="block font-semibold">Importar desde JSON:</label>
                 <input type="file" accept=".json" onchange="importarDesdeJSON(this)" class="p-2 border rounded">
+                <button onclick="guardarEnJSON()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                    Guardar Registros
+                </button>
             </div>
         </div>
     </div>
@@ -78,6 +81,15 @@
 
 <script>
     let registros = [];
+
+    function guardarEnLocalStorage() {
+        localStorage.setItem('registros_qr', JSON.stringify(registros));
+    }
+
+    function cargarDesdeLocalStorage() {
+        const data = localStorage.getItem('registros_qr');
+        if (data) registros = JSON.parse(data);
+    }
 
     function formatearFecha(fechaISO) {
         const fecha = new Date(fechaISO);
@@ -107,7 +119,7 @@
         );
     }
 
-    async function handleQR(text) {
+    function handleQR(text) {
         const match = text.match(/^(.*?)\s+C\.C\s+([\d\.]+)$/i);
         if (!match) return alert("Formato inválido");
 
@@ -118,9 +130,9 @@
 
         const registro = { nombre, fecha, hora, fechaOriginal: now.toISOString().split('T')[0] };
         registros.push(registro);
+        guardarEnLocalStorage();
         updateTable();
         updateListbox();
-        exportarJSON();
     }
 
     function updateTable() {
@@ -209,7 +221,7 @@
         XLSX.writeFile(wb, "registro_qr.xlsx");
     }
 
-    function exportarJSON() {
+    function guardarEnJSON() {
         const dataStr = JSON.stringify(registros, null, 2);
         const blob = new Blob([dataStr], { type: "application/json" });
         const url = URL.createObjectURL(blob);
@@ -232,6 +244,7 @@
                 const data = JSON.parse(e.target.result);
                 if (Array.isArray(data)) {
                     registros = data;
+                    guardarEnLocalStorage();
                     updateTable();
                     updateListbox();
                     alert("Registros importados con éxito.");
@@ -251,6 +264,7 @@
 
         if (password === "LCRG") {
             registros = [];
+            localStorage.removeItem('registros_qr');
             updateTable();
             updateListbox();
             alert('Todos los datos han sido borrados');
@@ -260,6 +274,7 @@
     }
 
     window.onload = () => {
+        cargarDesdeLocalStorage();
         updateTable();
         updateListbox();
         startScanner();
