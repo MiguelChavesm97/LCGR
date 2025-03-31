@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro QR 2 - Liceo Cristiano Golden Rule</title>
+    <title>Registro QR - Liceo Cristiano Golden Rule</title>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         body {
@@ -32,255 +31,110 @@
     </style>
 </head>
 <body class="bg-gray-100">
-    <div class="container mx-auto px-4 py-8">
-        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-            <div class="brand-blue p-4 flex items-center">
-                <div class="logo-container mr-4">
-                    <img src="logo.png" alt="Liceo Cristiano Golden Rule Logo" class="h-12 w-12 mr-4">
-                </div>
-                <h1 class="text-2xl font-bold">Registro QR Golden Rule</h1>
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="brand-blue p-4 flex items-center">
+            <div class="logo-container mr-4">
+                <img src="logo.png" alt="Liceo Cristiano Golden Rule Logo" class="h-12 w-12 mr-4">
             </div>
-            <div class="p-6">
-                <div id="reader" class="mx-auto mb-4" style="width: 100%; max-width: 300px;"></div>
+            <h1 class="text-2xl font-bold">Registro QR Golden Rule</h1>
+        </div>
+        <div class="p-6">
+            <div id="reader" class="mx-auto mb-4" style="width: 100%; max-width: 300px;"></div>
 
-                <div class="mb-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                    <select id="personList" onchange="filterTable()" class="form-select w-full sm:w-1/2 p-2 border rounded">
-                        <option value="">Selecciona una persona</option>
-                    </select>
+            <div class="mb-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                <select id="personList" onchange="filterTable()" class="form-select w-full sm:w-1/2 p-2 border rounded">
+                    <option value="">Selecciona una persona</option>
+                </select>
+                <input type="date" id="dateFilter" onchange="filterTable()" class="form-input w-full sm:w-1/2 p-2 border rounded">
+            </div>
 
-                    <input type="date" id="dateFilter" onchange="filterTable()" class="form-input w-full sm:w-1/2 p-2 border rounded">
-                </div>
+            <div class="overflow-x-auto">
+                <table id="logTable" class="w-full bg-white shadow rounded-lg overflow-hidden">
+                    <thead class="brand-blue">
+                        <tr>
+                            <th class="p-3 text-left">Nombre</th>
+                            <th class="p-3 text-left">Fecha</th>
+                            <th class="p-3 text-left">Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
 
-                <div class="overflow-x-auto">
-                    <table id="logTable" class="w-full bg-white shadow rounded-lg overflow-hidden">
-                        <thead class="brand-blue">
-                            <tr>
-                                <th class="p-3 text-left">Nombre</th>
-                                <th class="p-3 text-left">Fecha</th>
-                                <th class="p-3 text-left">Hora</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <div class="mt-4 flex space-x-2">
-                    <button onclick="exportToExcel()" class="brand-blue hover:opacity-90 text-white font-bold py-2 px-4 rounded">
-                        Exportar a Excel
-                    </button>
-                    <button onclick="clearAllData()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
-                        Borrar Datos
-                    </button>
-                </div>
+            <div class="mt-4 flex flex-wrap gap-2">
+                <button onclick="exportToExcel()" class="brand-blue hover:opacity-90 text-white font-bold py-2 px-4 rounded">
+                    Exportar a Excel
+                </button>
+                <button onclick="clearAllData()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
+                    Borrar Datos
+                </button>
+                <label class="block font-semibold">Importar desde JSON:</label>
+                <input type="file" accept=".json" onchange="importarDesdeJSON(this)" class="p-2 border rounded">
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        // IndexedDB for persistent storage
-        const dbName = 'QRRegistroDatabase';
-        const storeName = 'registros';
-        let db;
+<script>
+    let registros = [];
 
-        // Función para convertir fecha de yyyy-mm-dd a dd/mm/yyyy
-        function formatearFecha(fechaISO) {
-            const fecha = new Date(fechaISO);
-            const dia = fecha.getDate().toString().padStart(2, '0');
-            const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
-            const año = fecha.getFullYear();
-            return `${dia}/${mes}/${año}`;
-        }
+    function formatearFecha(fechaISO) {
+        const fecha = new Date(fechaISO);
+        const dia = fecha.getDate().toString().padStart(2, '0');
+        const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+        const año = fecha.getFullYear();
+        return `${dia}/${mes}/${año}`;
+    }
 
-        // Función para convertir fecha de dd/mm/yyyy a yyyy-mm-dd
-        function convertirFechaParaComparacion(fechaFormateada) {
-            if (!fechaFormateada) return null;
-            const [dia, mes, año] = fechaFormateada.split('/');
-            return `${año}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-        }
+    function convertirFechaParaComparacion(fechaFormateada) {
+        if (!fechaFormateada) return null;
+        const [dia, mes, año] = fechaFormateada.split('/');
+        return `${año}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+    }
 
-        // Open or create IndexedDB
-        function openDatabase() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(dbName, 1);
-                
-                request.onupgradeneeded = (event) => {
-                    db = event.target.result;
-                    if (!db.objectStoreNames.contains(storeName)) {
-                        db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
-                    }
-                };
-                
-                request.onsuccess = (event) => {
-                    db = event.target.result;
-                    resolve(db);
-                };
-                
-                request.onerror = (event) => {
-                    reject('Error abriendo base de datos');
-                };
-            });
-        }
+    function startScanner() {
+        const qrScanner = new Html5Qrcode("reader");
+        qrScanner.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: 250 },
+            qrCodeMessage => {
+                qrScanner.stop();
+                handleQR(qrCodeMessage);
+                setTimeout(() => startScanner(), 2000);
+            },
+            errorMessage => {}
+        );
+    }
 
-        // Save registro to IndexedDB
-        function saveRegistro(registro) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction([storeName], 'readwrite');
-                const store = transaction.objectStore(storeName);
-                const request = store.add(registro);
-                
-                request.onsuccess = () => resolve();
-                request.onerror = () => reject('Error guardando registro');
-            });
-        }
+    async function handleQR(text) {
+        const match = text.match(/^(.*?)\s+C\.C\s+([\d\.]+)$/i);
+        if (!match) return alert("Formato inválido");
 
-        // Retrieve all registros from IndexedDB
-        function getAllRegistros() {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction([storeName], 'readonly');
-                const store = transaction.objectStore(storeName);
-                const request = store.getAll();
-                
-                request.onsuccess = () => {
-                    // Convertir fechas de yyyy-mm-dd a dd/mm/yyyy
-                    const registrosFormateados = request.result.map(registro => ({
-                        ...registro,
-                        fecha: formatearFecha(registro.fecha)
-                    }));
-                    resolve(registrosFormateados);
-                };
-                request.onerror = () => reject('Error recuperando registros');
-            });
-        }
+        const nombre = match[1].trim();
+        const now = new Date();
+        const fecha = formatearFecha(now.toISOString().split('T')[0]);
+        const hora = now.toLocaleTimeString();
 
-        // Clear all data from IndexedDB
-        function clearAllData() {
-            const password = prompt("Por favor, ingrese la contraseña para borrar todos los datos:");
-            
-            if (password === "LCRG") {
-                const transaction = db.transaction([storeName], 'readwrite');
-                const store = transaction.objectStore(storeName);
-                const request = store.clear();
-                
-                request.onsuccess = () => {
-                    registros = [];
-                    updateTable();
-                    updateListbox();
-                    alert('Todos los datos han sido borrados');
-                };
-            } else if (password !== null) {
-                alert("Contraseña incorrecta. No se borrarán los datos.");
-            }
-        }
+        const registro = { nombre, fecha, hora, fechaOriginal: now.toISOString().split('T')[0] };
+        registros.push(registro);
+        updateTable();
+        updateListbox();
+        exportarJSON();
+    }
 
-        let registros = [];
+    function updateTable() {
+        const tbody = document.querySelector("#logTable tbody");
+        tbody.innerHTML = "";
+        const selected = document.getElementById("personList").value;
+        const selectedDate = document.getElementById("dateFilter").value;
 
-        async function initApp() {
-            await openDatabase();
-            const storedRegistros = await getAllRegistros();
-            registros = storedRegistros || [];
-            updateTable();
-            updateListbox();
-            startScanner();
-        }
-
-        function startScanner() {
-            const qrScanner = new Html5Qrcode("reader");
-            qrScanner.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: 250 },
-                qrCodeMessage => {
-                    qrScanner.stop();
-                    handleQR(qrCodeMessage);
-                    setTimeout(() => startScanner(), 2000);
-                },
-                errorMessage => {}
-            );
-        }
-
-        async function handleQR(text) {
-            const match = text.match(/^(.*?)\s+C\.C\s+([\d\.]+)$/i);
-            if (!match) return alert("Formato inválido");
-
-            const nombre = match[1].trim();
-            const now = new Date();
-            const fecha = formatearFecha(now.toISOString().split('T')[0]);
-            const hora = now.toLocaleTimeString();
-
-            const registro = { nombre, fecha, hora, fechaOriginal: now.toISOString().split('T')[0] };
-            registros.push(registro);
-            
-            try {
-                await saveRegistro({
-                    nombre, 
-                    fecha: now.toISOString().split('T')[0], 
-                    hora
-                });
-                updateTable();
-                updateListbox();
-            } catch (error) {
-                console.error(error);
-            }
-        }
-
-        function updateTable() {
-            const tbody = document.querySelector("#logTable tbody");
-            tbody.innerHTML = "";
-            const selected = document.getElementById("personList").value;
-            const selectedDate = document.getElementById("dateFilter").value;
-
-            registros
-                .filter(r => 
-                    (!selected || r.nombre === selected) && 
-                    (!selectedDate || r.fecha === formatearFecha(selectedDate))
-                )
-                .forEach(reg => {
-                    const row = `
-                        <tr class="border-b hover:bg-gray-100">
-                            <td class="p-3">${reg.nombre}</td>
-                            <td class="p-3">${reg.fecha}</td>
-                            <td class="p-3">${reg.hora}</td>
-                        </tr>
-                    `;
-                    tbody.innerHTML += row;
-                });
-        }
-
-        function updateListbox() {
-            const select = document.getElementById("personList");
-            const currentValue = select.value;
-            const nombresUnicos = [...new Set(registros.map(r => r.nombre))].sort();
-            
-            select.innerHTML = '<option value="">Selecciona una persona</option>';
-            nombresUnicos.forEach(nombre => {
-                const option = document.createElement("option");
-                option.value = nombre;
-                option.textContent = nombre;
-                select.appendChild(option);
-            });
-
-            // Restaurar el valor seleccionado previamente si existe
-            if (currentValue && nombresUnicos.includes(currentValue)) {
-                select.value = currentValue;
-            }
-
-            filterTable();
-        }
-        function filterTable() {
-            const selected = document.getElementById("personList").value;
-            const selectedDate = document.getElementById("dateFilter").value;
-
-            const tbody = document.querySelector("#logTable tbody");
-            tbody.innerHTML = "";
-
-            const filteredRegistros = registros.filter(r => {
-                const matchPerson = !selected || r.nombre === selected;
-                const matchDate = !selectedDate || 
-                    convertirFechaParaComparacion(r.fecha) === selectedDate;
-                
-                return matchPerson && matchDate;
-            });
-
-            filteredRegistros.forEach(reg => {
+        registros
+            .filter(r =>
+                (!selected || r.nombre === selected) &&
+                (!selectedDate || r.fecha === formatearFecha(selectedDate))
+            )
+            .forEach(reg => {
                 const row = `
                     <tr class="border-b hover:bg-gray-100">
                         <td class="p-3">${reg.nombre}</td>
@@ -290,25 +144,126 @@
                 `;
                 tbody.innerHTML += row;
             });
+    }
+
+    function updateListbox() {
+        const select = document.getElementById("personList");
+        const currentValue = select.value;
+        const nombresUnicos = [...new Set(registros.map(r => r.nombre))].sort();
+
+        select.innerHTML = '<option value="">Selecciona una persona</option>';
+        nombresUnicos.forEach(nombre => {
+            const option = document.createElement("option");
+            option.value = nombre;
+            option.textContent = nombre;
+            select.appendChild(option);
+        });
+
+        if (currentValue && nombresUnicos.includes(currentValue)) {
+            select.value = currentValue;
         }
-        function exportToExcel() {
-            const wb = XLSX.utils.book_new();
-            const personas = [...new Set(registros.map(r => r.nombre))];
 
-            personas.forEach(nombre => {
-                const datos = registros.filter(r => r.nombre === nombre);
-                const wsData = [["Nombre", "Fecha", "Hora"]];
-                datos.forEach(r => wsData.push([nombre, r.fecha, r.hora]));
+        filterTable();
+    }
 
-                const ws = XLSX.utils.aoa_to_sheet(wsData);
-                XLSX.utils.book_append_sheet(wb, ws, nombre.substring(0, 31));
-            });
+    function filterTable() {
+        const selected = document.getElementById("personList").value;
+        const selectedDate = document.getElementById("dateFilter").value;
 
-            XLSX.writeFile(wb, "registro_qr.xlsx");
+        const tbody = document.querySelector("#logTable tbody");
+        tbody.innerHTML = "";
+
+        const filteredRegistros = registros.filter(r => {
+            const matchPerson = !selected || r.nombre === selected;
+            const matchDate = !selectedDate ||
+                convertirFechaParaComparacion(r.fecha) === selectedDate;
+
+            return matchPerson && matchDate;
+        });
+
+        filteredRegistros.forEach(reg => {
+            const row = `
+                <tr class="border-b hover:bg-gray-100">
+                    <td class="p-3">${reg.nombre}</td>
+                    <td class="p-3">${reg.fecha}</td>
+                    <td class="p-3">${reg.hora}</td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    }
+
+    function exportToExcel() {
+        const wb = XLSX.utils.book_new();
+        const personas = [...new Set(registros.map(r => r.nombre))];
+
+        personas.forEach(nombre => {
+            const datos = registros.filter(r => r.nombre === nombre);
+            const wsData = [["Nombre", "Fecha", "Hora"]];
+            datos.forEach(r => wsData.push([nombre, r.fecha, r.hora]));
+
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            XLSX.utils.book_append_sheet(wb, ws, nombre.substring(0, 31));
+        });
+
+        XLSX.writeFile(wb, "registro_qr.xlsx");
+    }
+
+    function exportarJSON() {
+        const dataStr = JSON.stringify(registros, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "registros_qr.json";
+        a.click();
+
+        URL.revokeObjectURL(url);
+    }
+
+    function importarDesdeJSON(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (Array.isArray(data)) {
+                    registros = data;
+                    updateTable();
+                    updateListbox();
+                    alert("Registros importados con éxito.");
+                } else {
+                    alert("El archivo no contiene un formato válido.");
+                }
+            } catch (err) {
+                alert("Error al leer el archivo JSON.");
+                console.error(err);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function clearAllData() {
+        const password = prompt("Por favor, ingrese la contraseña para borrar todos los datos:");
+
+        if (password === "LCRG") {
+            registros = [];
+            updateTable();
+            updateListbox();
+            alert('Todos los datos han sido borrados');
+        } else if (password !== null) {
+            alert("Contraseña incorrecta. No se borrarán los datos.");
         }
+    }
 
-        // Initialize the app when the page loads
-        initApp();
-    </script>
+    window.onload = () => {
+        updateTable();
+        updateListbox();
+        startScanner();
+    };
+</script>
 </body>
 </html>
