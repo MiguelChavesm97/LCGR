@@ -72,22 +72,34 @@ async function startScanner() {
   const boton = document.getElementById("activarQR");
   boton.classList.add("hidden");
 
-  if (qrScanner) {
+  // Detener el escáner si está corriendo
+  if (qrScanner && Html5Qrcode.getCameras) {
     try {
       await qrScanner.stop();
+      qrScanner.clear(); // ✅ Limpia el contenedor
     } catch (e) {
-      console.warn("No se pudo detener el escáner anterior:", e);
+      console.warn("Error al detener o limpiar el escáner:", e);
     }
   }
 
+  // Limpiar manualmente el div por si quedó bloqueado
+  document.getElementById("reader").innerHTML = "";
+
+  // Crear un nuevo lector desde cero
   qrScanner = new Html5Qrcode("reader");
+
+  // Intentar iniciar de nuevo
   qrScanner.start(
     { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
-    msg => {
-      qrScanner.stop().then(() => {
+    async msg => {
+      try {
+        await qrScanner.stop();
+        await qrScanner.clear();
         handleQR(msg);
-      });
+      } catch (e) {
+        console.warn("Error al reiniciar lector tras lectura:", e);
+      }
     },
     err => {}
   ).catch(() => {
@@ -171,7 +183,7 @@ function updateListbox() {
 
 async function clearAllData() {
   const password = prompt("Por favor, ingrese la contraseña para borrar todos los datos:");
-  if (password === "LCRG") {
+  if (password === "LCGR") {
     await fetch(`${API_BASE}/registros`, { method: 'DELETE' });
     registros = [];
     updateTable();
@@ -181,6 +193,7 @@ async function clearAllData() {
     startScanner();
   } else if (password !== null) {
     alert("Contraseña incorrecta. No se borrarán los datos.");
+    startScanner();
   }
 }
 
