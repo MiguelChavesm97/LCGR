@@ -183,19 +183,31 @@ function updateListbox() {
 
 async function clearAllData() {
   const password = prompt("Por favor, ingrese la contraseña para borrar todos los datos:");
-  if (password === "LCGR") {
+  
+  if (password !== "LCGR") {
+    if (password !== null) alert("Contraseña incorrecta. No se borrarán los datos.");
+    return startScanner();
+  }
+
+  try {
     await fetch(`${API_BASE}/registros`, { method: 'DELETE' });
     registros = [];
     updateTable();
     updateListbox();
-    alert("Todos los datos han sido borrados.");
-    await cargarRegistros();
-    startScanner();
-  } else if (password !== null) {
-    alert("Contraseña incorrecta. No se borrarán los datos.");
+
+    // Esperar 100ms para evitar colisión con alert()
+    setTimeout(() => {
+      alert("Todos los datos han sido borrados.");
+      cargarRegistros().then(() => startScanner());
+    }, 100);
+
+  } catch (err) {
+    console.error("Error al borrar datos:", err);
+    alert("Ocurrió un error al intentar borrar los datos.");
     startScanner();
   }
 }
+
 
 function exportToExcel() {
   const wb = XLSX.utils.book_new();
