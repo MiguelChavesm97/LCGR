@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Registro QR - Liceo Cristiano Golden Rule</title>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100">
 <div class="container mx-auto px-4 py-8">
   <div class="bg-white shadow-lg rounded-lg overflow-hidden">
     <div class="bg-blue-900 text-white p-4 flex items-center">
-      <img src="logo.png" alt="Logo" class="h-12 w-12 mr-4" />
+      <img src="logo.png" alt="Logo" class="h-12 w-12 mr-4">
       <h1 class="text-2xl font-bold">Registro QR Golden Rule</h1>
     </div>
     <div class="p-6">
@@ -72,18 +72,23 @@ async function startScanner() {
   const boton = document.getElementById("activarQR");
   boton.classList.add("hidden");
 
+  // Detener el escáner si está corriendo
   if (qrScanner && Html5Qrcode.getCameras) {
     try {
       await qrScanner.stop();
-      qrScanner.clear();
+      qrScanner.clear(); // ✅ Limpia el contenedor
     } catch (e) {
       console.warn("Error al detener o limpiar el escáner:", e);
     }
   }
 
+  // Limpiar manualmente el div por si quedó bloqueado
   document.getElementById("reader").innerHTML = "";
+
+  // Crear un nuevo lector desde cero
   qrScanner = new Html5Qrcode("reader");
 
+  // Intentar iniciar de nuevo
   qrScanner.start(
     { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
@@ -103,7 +108,7 @@ async function startScanner() {
 }
 
 async function handleQR(text) {
-  const match = text.match(/^(.*?)\\s+C\\.C\\s+([\\d\\.]+)$/i);
+  const match = text.match(/^(.*?)\s+C\.C\s+([\d\.]+)$/i);
   if (!match) return alert("Formato inválido");
 
   const nombre = match[1].trim();
